@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>Client Risk Score Prediction</title>
+    <!-- Include ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .explanation-list {
+            padding-left: 0;
+            list-style: none;
+        }
+        .explanation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .badge-low {
+            background-color: #dc3545; /* Bootstrap danger color */
+        }
+        .badge-high {
+            background-color: #28a745; /* Bootstrap success color */
+        }
+        .alert {
+            font-size: 18px;
+        }
+        .risk-gauge-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            margin-bottom: 0; /* Remove the gap between the gauge and the explanation card */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .risk-gauge {
+            width: 100%;
+            max-width: 600px; /* Increase the max width to make the gauge bigger */
+            height: 600px; /* Increase the height to make the gauge bigger */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header text-center">
+                <h2>Client Risk Score Prediction</h2>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info text-center" role="alert">
+                    <h4><i class="fas fa-exclamation-circle"></i> Client Risk: {{ prediction * 100 }}%</h4>
+                </div>
+                <div class="risk-gauge-container">
+                    <div id="riskGauge" class="risk-gauge"></div>
+                </div>
+                <div class="card mt-4" style="margin-top: 0 !important;"> <!-- Remove the gap between the gauge and the explanation card -->
+                    <div class="card-header">
+                        Explanation for the Risk Score
+                    </div>
+                    <div class="card-body">
+                        <p>The reason for the risk score is:</p>
+                        <ul class="explanation-list">
+                            {% for item in explanation.split('\n') %}
+                                <li class="explanation-item">
+                                    <span>{{ item.split('(')[0].strip() }}</span>
+                                    <span class="badge {{ 'badge-low' if 'low' in item else 'badge-high' }}">
+                                        {{ 'Low' if 'low' in item else 'High' }} ({{ item.split('(')[1].strip(')') if '(' in item else '' }})
+                                    </span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Back</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("DOM fully loaded and parsed");
+            const prediction = parseFloat('{{ prediction }}');
+            console.log("Prediction value:", prediction, typeof prediction);
+
+            if (!isNaN(prediction)) {
+                var options = {
+                    chart: {
+                        height: 600, // Increase the height of the gauge
+                        type: 'radialBar',
+                    },
+                    series: [prediction * 100],
+                    plotOptions: {
+                        radialBar: {
+                            startAngle: -90,
+                            endAngle: 90,
+                            track: {
+                                background: "#e7e7e7",
+                                strokeWidth: '97%',
+                                margin: 5,
+                                dropShadow: {
+                                    enabled: true,
+                                    top: 2,
+                                    left: 0,
+                                    color: '#999',
+                                    opacity: 1,
+                                    blur: 2
+                                }
+                            },
+                            dataLabels: {
+                                name: {
+                                    show: false
+                                },
+                                value: {
+                                    offsetY: -20,
+                                    fontSize: '22px',
+                                    color: '#000',
+                                    formatter: function (val) {
+                                        return val.toFixed(2) + "%";
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shade: 'dark',
+                            type: 'horizontal',
+                            shadeIntensity: 0.5,
+                            gradientToColors: ['#FF0000'], // Red
+                            inverseColors: true,
+                            opacityFrom: 1,
+                            opacityTo: 1,
+                            stops: [0, 50, 100], // Green to Yellow to Red
+                            colorStops: [
+                                {
+                                    offset: 0,
+                                    color: '#00FF00', // Green
+                                    opacity: 1
+                                },
+                                {
+                                    offset: 50,
+                                    color: '#FFFF00', // Yellow
+                                    opacity: 1
+                                },
+                                {
+                                    offset: 100,
+                                    color: '#FF0000', // Red
+                                    opacity: 1
+                                }
+                            ]
+                        }
+                    },
+                    stroke: {
+                        lineCap: 'butt'
+                    },
+                    labels: [prediction.toFixed(2) + "%"]
+                };
+
+                var chart = new ApexCharts(document.querySelector("#riskGauge"), options);
+                chart.render();
+            } else {
+                console.error("Invalid prediction value:", prediction);
+            }
+        });
+    </script>
+</body>
+</html>
